@@ -4,6 +4,8 @@ import socket
 import sys
 import threading
 
+import Reconocimiento
+
 
 def servirPorSiempre(socketTcp, listaconexiones, NoPlayers):
     num_threads = int(NoPlayers)
@@ -82,10 +84,22 @@ def recibir_datos(barrier, conn, addr,condicion):
                             conn.sendall(paquete.encode())
                             print("[" + player + "] : esperando su tiro, fila =" + str(activos))
                             paquete = conn.recv(1024)
-                            print("[" + player + "] :respuesta recibida: " + paquete.decode())
+                            tamAudio = int(paquete.decode())
+                            conn.sendall(b"OK")
+                            print(player + "==============================================Envio ok")
+                            buff = 0
+                            with open("recibido.wav", "wb") as f:
+                                while buff < tamAudio:
+                                    paquete = conn.recv(1024)
+                                    f.write(paquete)
+                                    print("PAQUETE: " + str(buff))
+                                    buff += len(paquete)
+                            print("=============================================TERMINO")
+                            posiblePersonaje = Reconocimiento.getAudio()
+                            print("[" + player + "] :respuesta recibida: " + posiblePersonaje)
                             global personaje
-                            print(paquete.decode() + " == " + personaje)
-                            if paquete.decode() == personaje:
+                            print(posiblePersonaje + " == " + personaje)
+                            if posiblePersonaje == personaje:
                                 print("gano")
                                 paquete = "GANADOR|" + str(player)
 

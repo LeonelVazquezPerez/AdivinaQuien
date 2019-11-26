@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-
+import os
 import socket
 import time
-from principal import traducirAudio
+from Reconocimiento import recAudio
 HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 12345  # The port used by the server
 buffer_size = 1024
@@ -27,11 +27,24 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as TCPClientSocket:
                 print(pista)
             TCPClientSocket.sendall(b"Pido-Turno")
         elif paquete[0] == "SIGUE":
+            time.sleep(1)
             print("Siguiente Pista: ")
             print(paquete[1])
             print("Dime quien crees que sea")
-            respuesta = traducirAudio()
-            TCPClientSocket.sendall(respuesta.encode())
+            respuesta = recAudio()
+            print("Enviando tamanio del audio")
+            with open("microaudio.wav", "rb") as f:
+                content = f.read()
+                TCPClientSocket.sendall(str(len(content)).encode())
+
+            data = TCPClientSocket.recv(buffer_size)
+            print("Recibio paquete de salida")
+            if data.decode() == "OK":
+                with open("microaudio.wav", "rb") as f:
+                    print("Enviando archivo...")
+                    TCPClientSocket.sendfile(f, 0)
+                    print("Termino de enviar")
+                    #TCPClientSocket.sendall(b"termino")
         elif paquete[0] == "OCUPADO":
             time.sleep(1)
             TCPClientSocket.sendall(b"Pido-Turno")
